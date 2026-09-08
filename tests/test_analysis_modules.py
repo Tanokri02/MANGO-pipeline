@@ -27,6 +27,7 @@ plot_nll = load("plot_nll")
 plot_ab_likeness = load("plot_ab_likeness")
 plot_germline = load("plot_germline")
 plot_developability = load("plot_developability")
+plot_genes = load("plot_genes")
 
 
 class AnalysisModuleTests(unittest.TestCase):
@@ -64,9 +65,16 @@ class AnalysisModuleTests(unittest.TestCase):
         self.assertEqual(selected[0], selected[1])
 
     def test_biophysical_metrics(self):
-        gravy, charge = score_biophysical.score_sequence("ACDEFGHIKLMNPQRSTVWY", 7.4)
-        self.assertIsInstance(gravy, float)
-        self.assertIsInstance(charge, float)
+        metrics = score_biophysical.score_sequence("ACDEFGHIKLMNPQRSTVWY", 7.4)
+        for name in (
+            "net_charge_pH7.4",
+            "instability_index",
+            "isoelectric_point",
+            "gravy_hydrophobicity",
+            "aromaticity",
+            "aliphatic_index",
+        ):
+            self.assertIsInstance(metrics[name], float)
 
     def test_levenshtein_and_vj_reference(self):
         self.assertEqual(score_germline.levenshtein("ABC", "ADC"), 1)
@@ -124,8 +132,18 @@ class AnalysisModuleTests(unittest.TestCase):
                      germline_status="ok") for j, row in enumerate(base)
             ]))
             bio_paths.append(self._csv(f"bio-{tag}.csv", [
-                dict(row, gravy=-.2 + i / 10 + j / 20, charge_at_pH=1 + i + j,
-                     charge_ph=7.4, metric_status="ok") for j, row in enumerate(base)
+                dict(
+                    row,
+                    gravy_hydrophobicity=-.2 + i / 10 + j / 20,
+                    instability_index=30 + i + j,
+                    isoelectric_point=7 + i / 10 + j / 20,
+                    aromaticity=.1 + j / 100,
+                    aliphatic_index=60 + i + j,
+                    charge_ph=7.4,
+                    metric_status="ok",
+                    **{"net_charge_pH7.4": 1 + i + j},
+                )
+                for j, row in enumerate(base)
             ]))
 
         plot_ab_likeness.plot_ab_likeness(
@@ -139,7 +157,10 @@ class AnalysisModuleTests(unittest.TestCase):
             bio_paths, embedders, labels, 80,
             self.root / "fig5.png", self.root / "fig5.csv"
         )
-        for figure in ("fig1.png", "fig3.png", "fig4.png", "fig5.png"):
+        plot_genes.plot_all_embedder_genes(
+            germline_paths, self.root / "fig6.png", self.root / "fig6.csv", 80
+        )
+        for figure in ("fig1.png", "fig3.png", "fig4.png", "fig5.png", "fig6.png"):
             self.assertGreater((self.root / figure).stat().st_size, 0)
 
 
