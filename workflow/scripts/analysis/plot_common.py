@@ -14,6 +14,16 @@ import pandas as pd
 # the same embedder colors without requiring seaborn at runtime.
 PALETTE = ["#0173B2", "#DE8F05", "#029E73", "#D55E00",
            "#CC78BC", "#CA9161", "#FBAFE4", "#949494"]
+EMBEDDER_COLORS = {
+    "one_hot": PALETTE[0],
+    "biopython": PALETTE[1],
+    "pyrosetta_pre": PALETTE[2],
+    "esm2": PALETTE[3],
+    "esm3": PALETTE[4],
+    "esmif": PALETTE[5],
+    "proteinmpnn": PALETTE[6],
+    "afm": PALETTE[7],
+}
 FONT_FAMILY = "DejaVu Sans"
 TEXT = "#262626"
 TITLE_SIZE = 14
@@ -51,9 +61,10 @@ plt.rcParams.update({
 
 
 def colors(embedders):
-    if len(embedders) > len(PALETTE):
-        raise ValueError(f"at most {len(PALETTE)} embedders fit the fixed palette")
-    return dict(zip(embedders, PALETTE))
+    unknown = [tag for tag in embedders if tag not in EMBEDDER_COLORS]
+    if unknown:
+        raise ValueError(f"no fixed plot color is registered for {unknown}")
+    return {tag: EMBEDDER_COLORS[tag] for tag in embedders}
 
 
 def style(ax, title="", xlabel="", ylabel=""):
@@ -184,6 +195,11 @@ def save(fig, data, out_figure, out_data, dpi):
     data.to_csv(out_data, index=False)
     Path(out_figure).parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(rect=(0, 0.07, 1, 0.97))
-    fig.savefig(out_figure, dpi=int(dpi), bbox_inches="tight", facecolor="white")
+    fig.savefig(
+        out_figure,
+        dpi=max(300, int(dpi)),
+        bbox_inches="tight",
+        facecolor="white",
+    )
     plt.close(fig)
     print(f"wrote {out_figure} and {out_data}", flush=True)

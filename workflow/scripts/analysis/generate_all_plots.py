@@ -86,6 +86,25 @@ def _structure_embedders(paths):
     return seen
 
 
+def _preview_ablang2_inputs(paths, output_dir):
+    """Replace legacy confidence inputs with explicit empty preview inputs."""
+    preview_dir = output_dir / "_preview_inputs"
+    preview_dir.mkdir(parents=True, exist_ok=True)
+    prepared = []
+    for path in paths:
+        frame = pd.read_csv(path)
+        modes = set(frame.get("ablang2_mode", pd.Series(dtype=str)).astype(str))
+        if modes == {"pseudo_log_likelihood"} and "ablang2_pseudo_log_likelihood" in frame:
+            prepared.append(path)
+            continue
+        frame["ablang2_pseudo_log_likelihood"] = float("nan")
+        frame["ablang2_mode"] = "pseudo_log_likelihood"
+        destination = preview_dir / f"{Path(path).parent.parent.name}_ablang2.csv"
+        frame.to_csv(destination, index=False)
+        prepared.append(destination)
+    return prepared
+
+
 def generate_all(
     input_root,
     structure_root,
@@ -93,6 +112,7 @@ def generate_all(
     output_dir,
     embedders,
     dpi,
+    allow_missing_ablang2=False,
 ):
     input_root = Path(input_root)
     structure_root = Path(structure_root)
@@ -119,8 +139,12 @@ def generate_all(
             _existing(embedder_root / tag / "metrics" / f"{metric}.csv")
             for tag in tags
         ]
-        for metric in ("iglm", "antiberty", "ablang2")
+        for metric in ("iglm", "antiberty", "ablang2", "germline")
     }
+    if allow_missing_ablang2:
+        metrics["ablang2"] = _preview_ablang2_inputs(
+            metrics["ablang2"], output_dir
+        )
 
     plot_nll.plot_nll(
         evals,
@@ -178,9 +202,12 @@ def generate_all(
     )
     plot_genes.plot_all_embedder_genes(
         predictions_csv,
+        tags,
+        labels,
         output_dir / "fig6_gene_families.png",
         output_dir / "fig6_gene_families_data.csv",
         dpi,
+        species_paths=metrics["germline"],
     )
 
     rosetta_paths = _structure_inputs(structure_root, "rosetta")
@@ -245,7 +272,15 @@ def parse_args():
         nargs="+",
         help="Optional ordered subset; defaults to every available embedder",
     )
-    parser.add_argument("--dpi", type=int, default=180)
+    parser.add_argument("--dpi", type=int, default=300)
+    parser.add_argument(
+        "--allow-missing-ablang2",
+        action="store_true",
+        help=(
+            "Render an explicit empty AbLang2 panel when only legacy confidence "
+            "inputs are available; never converts confidence to perplexity"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -258,6 +293,7 @@ def main():
         args.output_dir,
         args.embedders,
         args.dpi,
+        args.allow_missing_ablang2,
     )
 
 
