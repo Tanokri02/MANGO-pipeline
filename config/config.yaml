@@ -264,9 +264,9 @@ analysis:
     antiberty:
       batch_size: 16
     ablang2:
-      # Paired H|L score. `confidence` is the fast, single-pass score drawn in
-      # the handbook; use pseudo_log_likelihood for a slower final analysis.
-      mode: "confidence"
+      # Paired H|L pseudo-log-likelihood, converted to pseudo perplexity in the
+      # antibody-likeness figure. This is slower than confidence scoring.
+      mode: "pseudo_log_likelihood"
 
   germline:
     scheme: "imgt"
@@ -288,7 +288,7 @@ analysis:
     fig5_developability: {enabled: true}   # six sequence biophysical properties
     fig6_gene_families:  {enabled: true}   # heavy-chain V/J family counts
   format: "png"
-  dpi: 200
+  dpi: 300
 
 # --- External model weights --------------------------------------------------
 weights:

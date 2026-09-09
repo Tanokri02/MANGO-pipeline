@@ -121,8 +121,8 @@ class AnalysisModuleTests(unittest.TestCase):
                 for j, row in enumerate(base)
             ]))
             inputs["ablang2"].append(self._csv(f"ablang-{tag}.csv", [
-                dict(row, ablang2_confidence=-0.5 - i - j / 10,
-                     ablang2_mode="confidence", ablang2_status="ok")
+                dict(row, ablang2_pseudo_log_likelihood=-0.5 - i - j / 10,
+                     ablang2_mode="pseudo_log_likelihood", ablang2_status="ok")
                 for j, row in enumerate(base)
             ]))
             germline_paths.append(self._csv(f"germline-{tag}.csv", [
@@ -158,7 +158,12 @@ class AnalysisModuleTests(unittest.TestCase):
             self.root / "fig5.png", self.root / "fig5.csv"
         )
         plot_genes.plot_all_embedder_genes(
-            germline_paths, self.root / "fig6.png", self.root / "fig6.csv", 80
+            germline_paths,
+            embedders,
+            labels,
+            self.root / "fig6.png",
+            self.root / "fig6.csv",
+            80,
         )
         for figure in ("fig1.png", "fig3.png", "fig4.png", "fig5.png", "fig6.png"):
             self.assertGreater((self.root / figure).stat().st_size, 0)

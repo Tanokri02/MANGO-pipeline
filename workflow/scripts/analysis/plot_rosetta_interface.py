@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import plot_common as pc
 
 
-def plot(paths, figure_path, data_path, dpi=160):
+def plot(paths, figure_path, data_path, dpi=300):
     data = pd.concat([pd.read_csv(path) for path in paths], ignore_index=True)
     data = data.loc[data["status"] == "ok"].copy()
     data["dG_separated"] = pd.to_numeric(data["dG_separated"], errors="coerce")

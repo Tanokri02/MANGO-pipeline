@@ -91,6 +91,8 @@ rule plot_fig6_gene_families:
         figure=figure_path("fig6_gene_families"),
         data=figure_data_path("fig6_gene_families"),
     params:
+        embedders=ANALYSIS_EMBEDDERS,
+        labels=_PLOT_LABELS,
         dpi=_DPI,
     log:
         f"{LOG_DIR}/plot_fig6_gene_families.log",
