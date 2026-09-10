@@ -45,7 +45,7 @@ def plot_nll(eval_jsons, embedders, labels, dpi, out_figure, out_data):
             pc.label_bars(ax, bars, values)
     ax.set_xticks(x, [labels.get(tag, tag) for tag in embedders], rotation=25, ha="right")
     pc.style(ax, "Antigen representation vs. heavy-chain likelihood",
-             ylabel="NLL (nats / predicted heavy-chain token)")
+             ylabel="NLL")
     ax.legend(
         frameon=False,
         title="split",
