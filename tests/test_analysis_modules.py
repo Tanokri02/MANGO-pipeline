@@ -88,6 +88,22 @@ class AnalysisModuleTests(unittest.TestCase):
             "A" * 100 + "B" * 28,
         )
 
+    def test_anarci_species_comes_from_nested_germline_assignment(self):
+        parsed = score_germline.parse_heavy_germline_assignment({
+            "chain_type": "H",
+            "species": "human",
+            "germlines": {
+                "v_gene": (("rhesus", "IGHV3-23*01"), 0.91),
+                "j_gene": (("rhesus", "IGHJ4*01"), 0.84),
+            },
+        })
+        self.assertEqual(parsed["anarci_hmm_species"], "human")
+        self.assertEqual(parsed["germline_species"], "rhesus")
+        self.assertEqual(parsed["v_gene"], "IGHV3-23*01")
+        self.assertEqual(parsed["j_gene"], "IGHJ4*01")
+        self.assertEqual(parsed["v_identity"], 0.91)
+        self.assertEqual(parsed["j_identity"], 0.84)
+
     def test_all_plot_writers(self):
         embedders = ["one_hot", "esm2"]
         labels = {"one_hot": "One-hot", "esm2": "ESM-2"}

@@ -18,6 +18,67 @@ def _read_inputs(file_paths):
     return pd.concat([pd.read_csv(path) for path in file_paths], ignore_index=True)
 
 
+def plot_species_distribution(
+    file_paths,
+    embedders,
+    labels,
+    out_figure,
+    out_data,
+    dpi=300,
+):
+    """Plot nearest-germline species counts from corrected ANARCI output."""
+    data = _read_inputs(file_paths)
+    required = {"embedder", "germline_species"}
+    missing = required - set(data.columns)
+    if missing:
+        raise ValueError(f"ANARCI output is missing columns: {sorted(missing)}")
+
+    valid = data.loc[data["germline_species"].fillna("").astype(str) != ""].copy()
+    if valid.empty:
+        raise RuntimeError("ANARCI produced no nearest-germline species assignments")
+    valid["germline_species"] = valid["germline_species"].astype(str).str.lower()
+
+    species_order = valid["germline_species"].value_counts().index.tolist()
+    if "human" in species_order:
+        species_order = ["human"] + [
+            species for species in species_order if species != "human"
+        ]
+
+    cmap = pc.colors(embedders)
+    sns.set_theme(style="whitegrid")
+    fig, ax = plt.subplots(figsize=(8.5, 5.4))
+    sns.countplot(
+        data=valid,
+        x="germline_species",
+        hue="colorblind",
+        hue_order=colorblind,
+        order=species_order,
+        palette=cmap,
+        ax=ax,
+    )
+    pc.style(
+        ax,
+        "Nearest-germline species assigned by ANARCI",
+        xlabel="Species",
+        ylabel="Number of sequences",
+    )
+    legend = ax.get_legend()
+    if len(embedders) == 1 and legend is not None:
+        legend.remove()
+    elif legend is not None:
+        legend.set_title("Antigen representation")
+        for text, tag in zip(legend.get_texts(), embedders):
+            text.set_text(labels.get(tag, tag))
+
+    summary = (
+        valid.groupby(["embedder", "germline_species"])
+        .size()
+        .rename("count")
+        .reset_index()
+    )
+    pc.save(fig, summary, out_figure, out_data, dpi)
+
+
 def plot_all_embedder_genes(
     file_paths,
     embedders,
@@ -101,7 +162,7 @@ def plot_all_embedder_genes(
             axes[2],
             "",
             "No ANARCI species assignments available",
-            xlabel="Species assigned by ANARCI",
+            xlabel="Nearest-germline species assigned by ANARCI",
             ylabel="Number of sequences identified by ANARCI",
         )
     else:
@@ -115,7 +176,7 @@ def plot_all_embedder_genes(
                 axes[2],
                 "",
                 "No ANARCI species assignments available",
-                xlabel="Species assigned by ANARCI",
+                xlabel="Nearest-germline species assigned by ANARCI",
                 ylabel="Number of sequences identified by ANARCI",
             )
         else:
@@ -134,7 +195,9 @@ def plot_all_embedder_genes(
                 ax=axes[2],
             )
             axes[2].set_title("")
-            axes[2].set_xlabel("Species assigned by ANARCI", fontsize=12)
+            axes[2].set_xlabel(
+                "Nearest-germline species assigned by ANARCI", fontsize=12
+            )
             axes[2].set_ylabel(
                 "Number of sequences identified by ANARCI", fontsize=12
             )
