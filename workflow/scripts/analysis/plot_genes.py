@@ -50,10 +50,11 @@ def plot_species_distribution(
     sns.countplot(
         data=valid,
         x="germline_species",
-        hue="colorblind",
-        hue_order=colorblind,
+        hue="germline_species",
+        hue_order=species_order,
         order=species_order,
-        palette=cmap,
+        palette="colorblind",
+        legend=False,
         ax=ax,
     )
     pc.style(
